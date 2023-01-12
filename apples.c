@@ -7,25 +7,25 @@
 
 struct node {
 	int id;
-	struct node *edges[MAX_EDGES];
-	int num_edges;
+	struct node *neighbors[MAX_EDGES];
+	int num_neighbors;
 };
 
-bool visit(struct node *n, struct node *nodes, bool *hasApple, bool *visited,
-	   int *seconds)
+bool traverse(struct node *graph, struct node *n, bool *hasApple, bool *visited,
+	      int *seconds)
 {
-	struct node *next_node;
-	int i;
 	bool ret, subgraph_has_apple = false;
+	struct node *neighbor;
+	int i;
 
 	visited[n->id] = true;
 
-	for (i = 0; i < n->num_edges; i++) {
-		next_node = n->edges[i];
+	for (i = 0; i < n->num_neighbors; i++) {
+		neighbor = n->neighbors[i];
 
-		if (!visited[next_node->id]) {
-			ret = visit(next_node, nodes, hasApple, visited,
-				    seconds);
+		if (!visited[neighbor->id]) {
+			ret = traverse(graph, neighbor, hasApple, visited,
+				       seconds);
 			if (ret)
 				*seconds += 2;
 
@@ -40,27 +40,28 @@ int
 minTime(int n, int **edges, int edgesSize, int *edgesColSize, bool *hasApple,
 	int hasAppleSize)
 {
-	struct node *nodes, *node_a, *node_b;
+	struct node *graph, *a, *b;
 	int seconds = 0;
 	bool *visited;
 	int i;
 
-	nodes = (struct node *)malloc(n * sizeof(*nodes));
+	graph = (struct node *)malloc(n * sizeof(*graph));
 
 	for (i = 0; i < n; i++) {
-		nodes[i].id = i;
+		graph[i].id = i;
 	}
 
 	for (i = 0; i < edgesSize; i++) {
-		node_a = &nodes[edges[i][0]];
-		node_b = &nodes[edges[i][1]];
+		a = &graph[edges[i][0]];
+		b = &graph[edges[i][1]];
 
-		node_a->edges[node_a->num_edges++] = node_b;
-		node_b->edges[node_b->num_edges++] = node_a;
+		a->neighbors[a->num_neighbors++] = b;
+		b->neighbors[b->num_neighbors++] = a;
 	}
 
 	visited = (bool *)calloc(n, sizeof(*visited));
-	visit(&nodes[0], nodes, hasApple, visited, &seconds);
+
+	traverse(graph, &graph[0], hasApple, visited, &seconds);
 
 	return seconds;
 }
