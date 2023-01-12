@@ -3,47 +3,64 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-bool visit(int start_vertex, int **edges, int edgesSize, int *seconds,
-	   bool *hasApple, bool *visited)
+#define MAX_EDGES 3
+
+struct node {
+	int id;
+	struct node *edges[MAX_EDGES];
+	int num_edges;
+};
+
+bool visit(struct node *n, struct node *nodes, bool *hasApple, bool *visited,
+	   int *seconds)
 {
-	int vertex_a, vertex_b, next_vertex;
-	bool ret, subgraph_has_apple = false;
+	struct node *next_node;
 	int i;
+	bool ret, subgraph_has_apple = false;
 
-	visited[start_vertex] = true;
+	visited[n->id] = true;
 
-	for (i = 0; i < edgesSize; i++) {
-		vertex_a = edges[i][0];
-		vertex_b = edges[i][1];
+	for (i = 0; i < n->num_edges; i++) {
+		next_node = n->edges[i];
 
-		if (vertex_a == start_vertex && !visited[vertex_b])
-			next_vertex = vertex_b;
-		else if (vertex_b == start_vertex && !visited[vertex_a])
-			next_vertex = vertex_a;
-		else
-			continue;
+		if (!visited[next_node->id]) {
+			ret = visit(next_node, nodes, hasApple, visited,
+				    seconds);
+			if (ret)
+				*seconds += 2;
 
-		ret = visit(next_vertex, edges, edgesSize, seconds, hasApple,
-			    visited);
-		if (ret)
-			*seconds += 2;
-
-		subgraph_has_apple |= ret;
+			subgraph_has_apple |= ret;
+		}
 	}
 
-	if (subgraph_has_apple || hasApple[start_vertex])
-		return true;
+	return (subgraph_has_apple || hasApple[n->id]) ? true : false;
 }
 
 int
 minTime(int n, int **edges, int edgesSize, int *edgesColSize, bool *hasApple,
 	int hasAppleSize)
 {
+	struct node *nodes, *node_a, *node_b;
 	int seconds = 0;
 	bool *visited;
+	int i;
+
+	nodes = (struct node *)malloc(n * sizeof(*nodes));
+
+	for (i = 0; i < n; i++) {
+		nodes[i].id = i;
+	}
+
+	for (i = 0; i < edgesSize; i++) {
+		node_a = &nodes[edges[i][0]];
+		node_b = &nodes[edges[i][1]];
+
+		node_a->edges[node_a->num_edges++] = node_b;
+		node_b->edges[node_b->num_edges++] = node_a;
+	}
 
 	visited = (bool *)calloc(n, sizeof(*visited));
-	visit(0, edges, edgesSize, &seconds, hasApple, visited);
+	visit(&nodes[0], nodes, hasApple, visited, &seconds);
 
 	return seconds;
 }
