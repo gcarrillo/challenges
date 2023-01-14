@@ -2,6 +2,15 @@
  * 1519. Number of Nodes in the Sub-Tree With the Same Label
  *
  * https://leetcode.com/problems/number-of-nodes-in-the-sub-tree-with-the-same-label/
+ *
+ * This version passed the example test cases, but got Time Limit Exceeded
+ * for n = 10^5.
+ *
+ * Alternate approach is:
+ * - Use DFS for traversal
+ * - Each node to return an array of size 26 to the parent, containing count of
+ *   all labels in the subtree of that node.
+ * - Store count for each node label in the output array
  */
 
 #include <stdio.h>
@@ -18,7 +27,7 @@ struct node {
 	int num_neighbors;
 };
 
-int count_nodes_r(struct node *cur, char *labels, char match, bool *visited,
+void count_nodes_r(struct node *cur, char *labels, char match, bool *visited,
 		  int *count)
 {
 	struct node *neighbor;
@@ -33,23 +42,19 @@ int count_nodes_r(struct node *cur, char *labels, char match, bool *visited,
 			count_nodes_r(neighbor, labels, match, visited, count);
 	}
 
-	//printf("%s: looking for %c, node %d has label %c\n", __func__, match, cur->id, labels[cur->id]);
-	if (labels[cur->id] == match) {
-		//printf("%s: bumping count\n", __func__);
+	if (labels[cur->id] == match)
 		(*count)++;
-	}
 }
 
 int count_nodes(int n, struct node *cur, char *labels, char match,
 		bool *visited)
 {
-	int i, count = 0;
+	int count = 0;
 	bool *visited_copy;
 
 	visited_copy = (bool *)calloc(n, sizeof(*visited_copy));
 	memcpy(visited_copy, visited, n * sizeof(*visited));
 
-	//printf("%s: count nodes that match %c\n", __func__, match);
 	count_nodes_r(cur, labels, match, visited_copy, &count);
 
 	free(visited_copy);
@@ -83,8 +88,10 @@ build_graph(int n, int **edges, int edgesSize)
 	graph = (struct node *)malloc(n * sizeof(*graph));
 	assert(graph);
 
-	for (i = 0; i < n; i++)
+	for (i = 0; i < n; i++) {
 		graph[i].id = i;
+		graph[i].num_neighbors = 0;
+	}
 
 	for (i = 0; i < edgesSize; i++) {
 		a = &graph[edges[i][0]];
@@ -105,7 +112,6 @@ int *countSubTrees(int n, int **edges, int edgesSize, int *edgesColSize,
 {
 	int *ans;
 	struct node *graph;
-	int i;
 	bool *visited;
 
 	ans = (int *)malloc(n * sizeof(*ans));
@@ -138,10 +144,8 @@ void test_case1(void)
 
 	ret = countSubTrees(7, edges, 6, &edgesColSize, labels, &returnSize);
 
-	for (i = 0; i < returnSize; i++) {
-		//printf("ret[%d] = %d, answer[%d] = %d\n", i, ret[i], i, answer[i]);
+	for (i = 0; i < returnSize; i++)
 		assert(ret[i] == answer[i]);
-	}
 }
 
 void test_case2(void)
@@ -159,10 +163,8 @@ void test_case2(void)
 
 	ret = countSubTrees(4, edges, 3, &edgesColSize, labels, &returnSize);
 
-	for (i = 0; i < returnSize; i++) {
-		//printf("ret[%d] = %d, answer[%d] = %d\n", i, ret[i], i, answer[i]);
+	for (i = 0; i < returnSize; i++)
 		assert(ret[i] == answer[i]);
-	}
 }
 
 void test_case3(void)
@@ -181,10 +183,8 @@ void test_case3(void)
 
 	ret = countSubTrees(5, edges, 4, &edgesColSize, labels, &returnSize);
 
-	for (i = 0; i < returnSize; i++) {
-		//printf("ret[%d] = %d, answer[%d] = %d\n", i, ret[i], i, answer[i]);
+	for (i = 0; i < returnSize; i++)
 		assert(ret[i] == answer[i]);
-	}
 }
 
 int
