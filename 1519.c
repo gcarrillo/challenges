@@ -27,56 +27,45 @@ struct node {
 	int num_neighbors;
 };
 
-void count_nodes_r(struct node *cur, char *labels, char match, bool *visited,
-		  int *count)
+int *
+traverse(struct node *cur, char *labels, bool *visited, int *ans)
 {
+	int *neighbor_counts, *total_counts;
+	int node_id, node_label;
 	struct node *neighbor;
-	int i;
+	int i, j, idx;
 
 	visited[cur->id] = true;
+
+#define NUM_LABELS 26
+	total_counts = (int *)calloc(NUM_LABELS, sizeof(*total_counts));
+	assert(total_counts);
+
+	node_id = cur->id;
+	node_label = labels[node_id];
+	idx = node_label - 'a';
 
 	for (i = 0; i < cur->num_neighbors; i++) {
 		neighbor = cur->neighbors[i];
 
-		if (!visited[neighbor->id]) 
-			count_nodes_r(neighbor, labels, match, visited, count);
+		if (!visited[neighbor->id]) {
+			neighbor_counts = traverse(neighbor, labels, visited,
+						   ans);
+
+			/* Update the counts for neighboring nodes */
+			ans[node_id] += neighbor_counts[idx];
+			for (j = 0; j < NUM_LABELS; j++)
+				total_counts[j] += neighbor_counts[j];
+
+			free(neighbor_counts);
+		}
 	}
 
-	if (labels[cur->id] == match)
-		(*count)++;
-}
+	/* Lastly, update counts for current node */
+	ans[node_id]++;
+	total_counts[idx]++;
 
-int count_nodes(int n, struct node *cur, char *labels, char match,
-		bool *visited)
-{
-	int count = 0;
-	bool *visited_copy;
-
-	visited_copy = (bool *)calloc(n, sizeof(*visited_copy));
-	memcpy(visited_copy, visited, n * sizeof(*visited));
-
-	count_nodes_r(cur, labels, match, visited_copy, &count);
-
-	free(visited_copy);
-
-	return count;
-}
-
-void traverse(struct node *cur, int n, char *labels, bool *visited, int *ans)
-{
-	struct node *neighbor;
-	int i;
-
-	visited[cur->id] = true;
-
-	ans[cur->id] = count_nodes(n, cur, labels, labels[cur->id], visited);
-
-	for (i = 0; i < cur->num_neighbors; i++) {
-		neighbor = cur->neighbors[i];
-
-		if (!visited[neighbor->id])
-			traverse(neighbor, n, labels, visited, ans);
-	}
+	return total_counts;
 }
 
 struct node *
@@ -85,7 +74,7 @@ build_graph(int n, int **edges, int edgesSize)
 	struct node *graph, *a, *b;
 	int i;
 
-	graph = (struct node *)malloc(n * sizeof(*graph));
+	graph = (struct node *)calloc(n, sizeof(*graph));
 	assert(graph);
 
 	for (i = 0; i < n; i++) {
@@ -107,26 +96,30 @@ build_graph(int n, int **edges, int edgesSize)
 /**
  * Note: the returned array must be malloced, assume caller calls free().
  */
-int *countSubTrees(int n, int **edges, int edgesSize, int *edgesColSize,
-		   char *labels, int *returnSize)
+int *
+countSubTrees(int n, int **edges, int edgesSize, int *edgesColSize,
+	      char *labels, int *returnSize)
 {
-	int *ans;
 	struct node *graph;
+	int *counts, *ans;
 	bool *visited;
 
-	ans = (int *)malloc(n * sizeof(*ans));
+	ans = (int *)calloc(n, sizeof(*ans));
 	assert(ans);
 	*returnSize = n;
 
 	graph = build_graph(n, edges, edgesSize);
 	visited = (bool *)calloc(n, sizeof(*visited));
 
-	traverse(&graph[0], n, labels, visited, ans);
+	counts = traverse(&graph[0], labels, visited, ans);
+	free(counts);
+	free(graph);
 
 	return ans;
 }
 
-void test_case1(void)
+void
+test_case1(void)
 {
 	int edge1[] = {0, 1};
 	int edge2[] = {0, 2};
@@ -144,11 +137,14 @@ void test_case1(void)
 
 	ret = countSubTrees(7, edges, 6, &edgesColSize, labels, &returnSize);
 
-	for (i = 0; i < returnSize; i++)
+	for (i = 0; i < returnSize; i++) {
+		//printf("ret[%d] = %d, answer[%d] = %d\n", i, ret[i], i, answer[i]);
 		assert(ret[i] == answer[i]);
+	}
 }
 
-void test_case2(void)
+void
+test_case2(void)
 {
 	int edge1[] = {0, 1};
 	int edge2[] = {1, 2};
@@ -163,11 +159,14 @@ void test_case2(void)
 
 	ret = countSubTrees(4, edges, 3, &edgesColSize, labels, &returnSize);
 
-	for (i = 0; i < returnSize; i++)
+	for (i = 0; i < returnSize; i++) {
+		//printf("ret[%d] = %d, answer[%d] = %d\n", i, ret[i], i, answer[i]);
 		assert(ret[i] == answer[i]);
+	}
 }
 
-void test_case3(void)
+void
+test_case3(void)
 {
 	int edge1[] = {0, 1};
 	int edge2[] = {0, 2};
