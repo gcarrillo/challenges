@@ -3,10 +3,8 @@
  *
  * https://leetcode.com/problems/number-of-nodes-in-the-sub-tree-with-the-same-label/
  *
- * This version passed the example test cases, but got Time Limit Exceeded
- * for n = 10^5.
- *
- * Alternate approach is:
+ * This version uses the following approach for an O(n) solution, which got
+ * accepted:
  * - Use DFS for traversal
  * - Each node to return an array of size 26 to the parent, containing count of
  *   all labels in the subtree of that node.
